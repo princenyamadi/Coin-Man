@@ -25,6 +25,7 @@ public class CoinMan extends ApplicationAdapter {
 	int manY = 0;
 	Rectangle manRectangle;
 	BitmapFont font;
+	Texture dizzy;
 
 	int score = 0;
 	Random random;
@@ -41,7 +42,7 @@ public class CoinMan extends ApplicationAdapter {
 
 	Texture bomb;
 	int bombCount;
-
+	int gameState;
 
 	@Override
 	public void create () {
@@ -62,6 +63,8 @@ public class CoinMan extends ApplicationAdapter {
 		font = new BitmapFont();
 		font.setColor(Color.WHITE);
 		font.getData().setScale(10);
+
+		dizzy = new Texture("dizzy-1.png");
 
 
 	}
@@ -85,63 +88,101 @@ public class CoinMan extends ApplicationAdapter {
 		batch.begin();
 		batch.draw(background, 0,0,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 
-		if(coinCount < 100){
-			coinCount++;
-		}else {
-			coinCount = 0;
-			makeCoin();
-		}
-
-		if(bombCount < 250){
-			bombCount++;
-		}else{
-			bombCount = 0;
-			makeBomb();
-		}
-
-
-		if(Gdx.input.justTouched()){
-			velocity = -10;
-		}
-		coinRectangles.clear();
-		for(int i = 0; i < coinX.size();i++){
-			batch.draw(coin, coinX.get(i),coinY.get(i));
-			coinX.set(i, coinX.get(i)- 4);
-			coinRectangles.add(new Rectangle(coinX.get(i),coinY.get(i), coin.getWidth(),coin.getHeight()));
-		}
-
-		bombRectangles.clear();
-
-
-		for(int i = 0; i < bombX.size();i++){
-			batch.draw(bomb, bombX.get(i),bombY.get(i));
-
-			bombX.set(i, bombX.get(i)- 8);
-			bombRectangles.add(new Rectangle(bombX.get(i),bombY.get(i), bomb.getWidth(),bomb.getHeight()));
-		}
-
-
-
-
-		if(pause < 8){
-			pause++;
-		}else{
-			pause = 0;
-			if(manState < 3){
-				manState++;
-			}else{
-				manState = 0;
+		if(gameState == 1){
+//			game is live
+			velocity += gravity;
+			manY -= velocity;
+			if(manY <= 0){
+				manY = 0;
 			}
+
+
+			if(Gdx.input.justTouched()){
+				velocity = -10;
+			}
+
+			if(pause < 8){
+				pause++;
+			}else{
+				pause = 0;
+				if(manState < 3){
+					manState++;
+				}else{
+					manState = 0;
+				}
+			}
+
+			//BOMB
+			if(bombCount < 250){
+				bombCount++;
+			}else{
+				bombCount = 0;
+				makeBomb();
+			}
+			bombRectangles.clear();
+			for(int i = 0; i < bombX.size();i++){
+				batch.draw(bomb, bombX.get(i),bombY.get(i));
+
+				bombX.set(i, bombX.get(i)- 8);
+				bombRectangles.add(new Rectangle(bombX.get(i),bombY.get(i), bomb.getWidth(),bomb.getHeight()));
+				gameState = 2;
+			}
+
+			//COIN
+			if(coinCount < 100){
+				coinCount++;
+			}else {
+				coinCount = 0;
+				makeCoin();
+			}
+			coinRectangles.clear();
+			for(int i = 0; i < coinX.size();i++){
+				batch.draw(coin, coinX.get(i),coinY.get(i));
+				coinX.set(i, coinX.get(i)- 4);
+				coinRectangles.add(new Rectangle(coinX.get(i),coinY.get(i), coin.getWidth(),coin.getHeight()));
+			}
+
+
+
+
+
+		}else if(gameState == 0){
+//				Waiting to start
+
+			if(Gdx.input.justTouched()){
+				gameState =1;
+
+
+			}
+
+		}else if(gameState == 2){
+//			Game over
+			if(Gdx.input.justTouched()) {
+				gameState = 1;
+				manY = Gdx.graphics.getHeight() / 2;
+				score = 0;
+				velocity = 0;
+
+				coinX.clear();
+				coinY.clear();
+				coinRectangles.clear();
+				coinCount = 0;
+
+				bombX.clear();
+				bombY.clear();
+				bombRectangles.clear();
+				bombCount = 0;
+
+			}
+
+			}
+
+		if(gameState == 2){
+			batch.draw( dizzy,Gdx.graphics.getWidth() / 2 - man[manState].getWidth()/2, manY );
+		}else {
+			batch.draw(man[manState], Gdx.graphics.getWidth() / 2 - man[manState].getWidth()/2, manY );
 		}
 
-		velocity += gravity;
-		manY -= velocity;
-		if(manY <= 0){
-			manY = 0;
-		}
-
-
-		batch.draw(man[manState], Gdx.graphics.getWidth() / 2 - man[manState].getWidth()/2,manY );
 		manRectangle = new Rectangle(Gdx.graphics.getWidth() / 2 - man[manState].getWidth()/2,manY,man[manState].getWidth(),man[manState].getHeight());
 
 		for(int i = 0; i < coinRectangles.size(); i++){
